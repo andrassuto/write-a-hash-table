@@ -65,6 +65,13 @@ void ht_insert(hash_table* ht, const char* key, const char* value) {
 
     int i = 1;
     while (current_item != NULL) {
+        if (current_item != &DELETED_ITEM) {
+            if (strcmp(current_item->key, key) == 0) {
+                ht_del_item(current_item);
+                ht->items[index] = item;
+                return;
+            }
+        }
         index = get_hash(item->key, ht->size, i);
         current_item = ht->items[index];
         i++;
@@ -73,10 +80,44 @@ void ht_insert(hash_table* ht, const char* key, const char* value) {
     ht->count++;
 }
 
+
 char* ht_search(hash_table* ht, const char* key) {
-    
+    int index = get_hash(key, ht->size, 0);
+    ht_item* item = ht->items[index];
+    int i = 1;
+
+    // iterate through all non-empty buckets
+    while (item != NULL) {
+        if (item != &DELETED_ITEM) {
+            if (strcmp(item->key, key) == 0) {
+                return item->key;
+            }
+            int index = get_hash(key, ht->size, i);
+            item = ht->items[index];
+            i++;
+        } //TODO: check closing bracket location -- delete logic modification
+    }
+    return NULL; //item not found
 }
 
-void ht_delete(hash_table* ht, const char* key) {
+static ht_item DELETED_ITEM = {NULL, NULL};
 
+void ht_delete(hash_table* ht, const char* key) {
+    int index = get_hash(key, ht->size, 0);
+    ht_item* item = ht->items[index];
+    int i = 1;
+
+    //find item to be deleted and replace it with a pointer to DELETED_ITEM placeholder 
+    while (item != NULL) {
+        if (item != &DELETED_ITEM) {
+            if (strcmp(item->key, key) == 0) {
+                delete_item(item);
+                ht->items[index] = &DELETED_ITEM;
+            }
+        }
+        int index = get_hash(key, ht->size, i);
+        item = ht->items[index];
+        i++;
+    }
+    ht->count--;
 }
