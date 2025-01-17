@@ -8,6 +8,8 @@
 #define HT_PRIME_A 2161
 #define HT_PRIME_B 2179
 
+static ht_item DELETED_ITEM = {NULL, NULL};
+
 
 static ht_item* new_item(const char* key, const char* value) {
     ht_item* i = malloc(sizeof(ht_item));
@@ -67,7 +69,7 @@ void ht_insert(hash_table* ht, const char* key, const char* value) {
     while (current_item != NULL) {
         if (current_item != &DELETED_ITEM) {
             if (strcmp(current_item->key, key) == 0) {
-                ht_del_item(current_item);
+                delete_item(current_item);
                 ht->items[index] = item;
                 return;
             }
@@ -97,10 +99,8 @@ char* ht_search(hash_table* ht, const char* key) {
             i++;
         } //TODO: check closing bracket location -- delete logic modification
     }
-    return NULL; //item not found
+    return NULL;
 }
-
-static ht_item DELETED_ITEM = {NULL, NULL};
 
 void ht_delete(hash_table* ht, const char* key) {
     int index = get_hash(key, ht->size, 0);
