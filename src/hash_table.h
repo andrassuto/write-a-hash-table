@@ -21,9 +21,3 @@ void ht_insert(hash_table* ht, const char* key, const char* value);
 char* ht_search(hash_table* ht, const char* key);
 
 void ht_delete(hash_table* ht, const char* key);
-
-hash_table* ht_new_size(const int base_size);
-
-void ht_resize_up(hash_table* ht);
-
-void ht_resize_down(hash_table* ht);

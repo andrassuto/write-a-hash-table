@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "hash_table.h"
+#include "prime.h"
 
 #define HT_INITIAL_BASE_SIZE 50
 #define HT_PRIME_A 2161
@@ -10,6 +11,52 @@
 
 static ht_item DELETED_ITEM = {NULL, NULL};
 
+static hash_table* ht_new_size(const int base_size) {
+    hash_table* ht = malloc(sizeof(hash_table));
+    ht->base_size = base_size;
+
+    ht->size = next_prime(ht->base_size);
+
+    ht->count = 0;
+    ht->items = calloc((size_t)ht->size, sizeof(ht_item*));
+    return ht;
+}
+
+static void ht_resize(hash_table* ht, const int base_size) {
+    if (base_size < HT_INITIAL_BASE_SIZE) {
+        return;
+    }
+    hash_table* new_hash_table = ht_new_size(base_size);
+    for (int i = 0; i < ht->size; i++) {
+        ht_item* item = ht->items[i];
+        if (item != NULL && item != &DELETED_ITEM) {
+            ht_insert(new_hash_table, item->key, item->value);
+        }
+    }
+    ht->base_size = new_hash_table->base_size;
+    ht->count = new_hash_table->count;
+
+    //swap attributes
+    const int temp_size = ht->size;
+    ht->size = new_hash_table->size;
+    new_hash_table->size = temp_size;
+
+    ht_item** temp_items = ht->items;
+    ht->items = new_hash_table->items;
+    new_hash_table->items = temp_items;
+
+    delete_ht(new_hash_table);
+}
+
+static void ht_resize_up(hash_table* ht) {
+    const int new_size = ht->base_size * 2;
+    ht_resize(ht, new_size);
+}
+
+static void ht_resize_down(hash_table* ht) {
+    const int new_size = ht->base_size / 2;
+    ht_resize(ht, new_size);
+}
 
 static ht_item* new_item(const char* key, const char* value) {
     ht_item* i = malloc(sizeof(ht_item));
@@ -106,7 +153,7 @@ char* ht_search(hash_table* ht, const char* key) {
             int index = get_hash(key, ht->size, i);
             item = ht->items[index];
             i++;
-        } //TODO: check closing bracket location -- delete logic modification
+        }
     }
     return NULL;
 }
@@ -134,51 +181,4 @@ void ht_delete(hash_table* ht, const char* key) {
         i++;
     }
     ht->count--;
-}
-
-static hash_table* ht_new_size(const int base_size) {
-    hash_table* ht = malloc(sizeof(hash_table));
-    ht->base_size = base_size;
-
-    ht->size = next_prime(ht->base_size);
-
-    ht->count = 0;
-    ht->items = calloc((size_t)ht->size, sizeof(ht_item*));
-    return ht;
-}
-
-static void ht_resize(hash_table* ht, const int base_size) {
-    if (base_size < HT_INITIAL_BASE_SIZE) {
-        return;
-    }
-    hash_table* new_hash_table = ht_new_size(base_size);
-    for (int i = 0; i < ht->size; i++) {
-        ht_item* item = ht->items[i];
-        if (item != NULL && item != &DELETED_ITEM) {
-            ht_insert(new_hash_table, item->key, item->value);
-        }
-    }
-    ht->base_size = new_hash_table->base_size;
-    ht->count = new_hash_table->count;
-
-    //swap attributes
-    const int temp_size = ht->size;
-    ht->size = new_hash_table->size;
-    new_hash_table->size = temp_size;
-
-    ht_item** temp_items = ht->items;
-    ht->items = new_hash_table->items;
-    new_hash_table->items = temp_items;
-
-    delete_ht(new_hash_table);
-}
-
-static void ht_resize_up(hash_table* ht) {
-    const int new_size = ht->base_size * 2;
-    ht_resize(ht, new_size);
-}
-
-static void ht_resize_down(hash_table* ht) {
-    const int new_size = ht->base_size / 2;
-    ht_resize(ht, new_size);
 }
